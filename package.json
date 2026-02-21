@@ -1,0 +1,64 @@
+{
+  "name": "antigravity-discord-bridge-ts",
+  "displayName": "Antigravity Discord Bridge (Native)",
+  "description": "Control your Antigravity IDE remotely via Discord.",
+  "version": "1.0.0",
+  "publisher": "antigravity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UniUni1274/antigravity-discord-bridge-ts.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravity-discord-bridge.toggleBot",
+        "title": "Discord Bridge: Toggle Bot"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Discord Bridge",
+      "properties": {
+        "antigravity-discord-bridge.botToken": {
+          "type": "string",
+          "default": "",
+          "description": "Discord Bot Token for the bridge."
+        },
+        "antigravity-discord-bridge.allowedUserId": {
+          "type": "string",
+          "default": "",
+          "description": "The allowed Discord User ID (Numeric). Only this user can control the bot."
+        },
+        "antigravity-discord-bridge.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the Discord Bot when Antigravity IDE launches."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "18.x",
+    "typescript": "^5.1.3"
+  }
+}

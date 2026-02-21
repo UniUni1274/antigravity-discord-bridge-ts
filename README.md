@@ -19,24 +19,6 @@ Control your Antigravity IDE and run the built-in AI assistant remotely via Disc
 
 ---
 
-## ☕ Support the Developer
-
-If you find this extension useful and it saves you time, please consider buying me a coffee! A small **$2 USDC** donation helps keep this project alive and updated.
-
-**Solana (SOL / USDC-SPL):**
-```text
-E4grjx9DxwH7Ft1JYZcCA1QYqB754HVSDLuie44ag5Wh
-```
-
-**EVM (Ethereum / Polygon / Arbitrum / Base USDC):**
-```text
-0xBEe137Ce1412821cf8a6f6878BE6149D4cc97787
-```
-
-Thank you for your support! 💖
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions from the community! If you are an advanced developer who wants to improve the Antigravity Discord Bridge:

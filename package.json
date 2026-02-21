@@ -32,17 +32,17 @@
         "antigravity-discord-bridge.botToken": {
           "type": "string",
           "default": "",
-          "description": "Discord Bot Token for the bridge."
+          "description": "Bridge API Key."
         },
         "antigravity-discord-bridge.allowedUserId": {
           "type": "string",
           "default": "",
-          "description": "The allowed Discord User ID (Numeric). Only this user can control the bot."
+          "description": "The allowed User ID (Numeric). Only this user can control the proxy."
         },
         "antigravity-discord-bridge.autoStart": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically start the Discord Bot when Antigravity IDE launches."
+          "description": "Automatically start the proxy when Antigravity IDE launches."
         }
       }
     }
@@ -52,7 +52,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "npx @vscode/vsce package",
-    "package-ext": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node"
+    "package-ext": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify"
   },
   "dependencies": {
     "discord.js": "^14.14.1"

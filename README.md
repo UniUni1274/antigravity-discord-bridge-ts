@@ -9,13 +9,13 @@ Control your Antigravity IDE and run the built-in AI assistant remotely via Disc
 - **Real-time Streaming**: Watch the AI thinking process stream directly to your Discord channel.
 
 ## 🚀 Setup Guide
-1. Create a Discord Bot at the [Developer Portal](https://discord.com/developers/applications).
-2. Grab your **Bot Token**.
-3. Enable all **Privileged Gateway Intents** (Presence, Server Members, Message Content).
-4. Invite the bot to your server using the OAuth2 URL generator (needs `bot`, `applications.commands`, and `Administrator` permissions).
+1. Create an APP at the generic Developer Portal.
+2. Grab your Application **API Key**.
+3. Enable all required **Intents** (Presence, Members, Message).
+4. Invite the proxy to your server using the OAuth2 URL generator.
 5. In your IDE, go to Settings (`Ctrl+,`) and search for `Antigravity Discord Bridge`.
-6. Paste your Bot Token and your personal numeric **Discord User ID** (for security).
-7. The bot will automatically start! (Or you can toggle it via the Status Bar button).
+6. Paste your API Key and your personal numeric **Admin ID** (for security).
+7. The proxy will automatically start! (Or you can toggle it via the Status Bar button).
 
 ---
 

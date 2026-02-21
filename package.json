@@ -3,7 +3,7 @@
   "displayName": "Antigravity Discord Bridge (Native)",
   "description": "Control your Antigravity IDE remotely via Discord.",
   "version": "1.0.0",
-  "publisher": "antigravity",
+  "publisher": "Manon1274",
   "repository": {
     "type": "git",
     "url": "https://github.com/UniUni1274/antigravity-discord-bridge-ts.git"

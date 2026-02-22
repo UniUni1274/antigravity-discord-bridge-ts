@@ -16,7 +16,8 @@ const MODEL_MAP: Record<string, string> = {
 const GLOBAL_STATE = {
     currentModel: 'MODEL_PLACEHOLDER_M37', // Default to Gemini 3.1 Pro
     currentModelDisplay: 'Gemini 3.1 Pro (High)',
-    currentMode: 'Planning'
+    currentMode: 'Planning',
+    autoApprove: false
 };
 
 export class DiscordBot {
@@ -59,6 +60,27 @@ export class DiscordBot {
             // Command parsing
             if (message.content.startsWith('/models') || message.content === '!models') {
                 await this.sendModelSelectionPanel(message);
+                return;
+            }
+            if (message.content.startsWith('/mode ')) {
+                const modeArgs = message.content.split(' ')[1]?.toLowerCase();
+                if (modeArgs === 'planning') {
+                    GLOBAL_STATE.currentMode = 'Planning';
+                    GLOBAL_STATE.currentModel = MODEL_MAP['Gemini 3.1 Pro (High)'];
+                    GLOBAL_STATE.currentModelDisplay = 'Gemini 3.1 Pro (High)';
+                    await message.reply('🧠 Switched to **Planning Mode** (High Intelligence: Gemini 3.1 Pro).');
+                } else if (modeArgs === 'fast') {
+                    GLOBAL_STATE.currentMode = 'Fast';
+                    GLOBAL_STATE.currentModel = MODEL_MAP['Gemini 3 Flash'];
+                    GLOBAL_STATE.currentModelDisplay = 'Gemini 3 Flash';
+                    await message.reply('⚡ Switched to **Fast Mode** (High Speed: Gemini 3 Flash).');
+                } else if (modeArgs === 'auto') {
+                    GLOBAL_STATE.autoApprove = !GLOBAL_STATE.autoApprove;
+                    const status = GLOBAL_STATE.autoApprove ? 'ON' : 'OFF';
+                    await message.reply(`🤖 **Auto-Approve / GitHub Deployment Mode** is now **${status}**.\n*(When ON, the AI will be instructed to automatically run commands, create a GitHub repo, and push the final code.)*`);
+                } else {
+                    await message.reply('Invalid mode. Use `/mode planning`, `/mode fast`, or `/mode auto`.');
+                }
                 return;
             }
 
@@ -140,11 +162,40 @@ export class DiscordBot {
         const text = message.content;
         const dispModel = GLOBAL_STATE.currentModelDisplay;
 
+        let finalMessage = message.content.trim();
+        if (GLOBAL_STATE.autoApprove) {
+            finalMessage += "\n\n[システム司令: この依頼を処理する際、ターミナルコマンドの実行やファイル変更はすべてそのまま行い、最後に `gh repo create` などを用いてGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。]";
+        }
+
+        const items: any[] = [];
+        if (finalMessage) {
+            items.push({ text: finalMessage });
+        }
+
+        for (const [id, attachment] of message.attachments) {
+            if (attachment.contentType?.startsWith('image/')) {
+                try {
+                    const response = await fetch(attachment.url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    items.push({
+                        image: {
+                            data: buffer.toString('base64') // Or whatever specific structure the API needs. Base64 is standard.
+                        }
+                    });
+                } catch (e: any) {
+                    this.outputChannel.appendLine(`[Error] Failed to process image: ${e.message}`);
+                }
+            }
+        }
+
+        if (items.length === 0) return;
+
         let initialMsg = await message.reply(`🤔 Thinking... (\`${dispModel}\` / \`${GLOBAL_STATE.currentMode}\`)`);
 
         try {
             const cascadeId = await this.antigravityClient.startCascade();
-            await this.antigravityClient.sendUserMessage(cascadeId, text, GLOBAL_STATE.currentModel);
+            await this.antigravityClient.sendUserMessage(cascadeId, items, GLOBAL_STATE.currentModel);
 
             this.outputChannel.appendLine(`[Antigravity] Started cascade: ${cascadeId}`);
 
@@ -212,6 +263,11 @@ export class DiscordBot {
                         }
                     }
                 }
+            }
+
+            if (GLOBAL_STATE.autoApprove && !isDone) {
+                // Automatically send 'accept' interactions to bypass any user confirmations required by the IDE (e.g. running commands)
+                this.antigravityClient.approveWait(cascadeId).catch(() => { });
             }
 
             if (!isDone) {

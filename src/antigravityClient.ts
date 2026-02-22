@@ -126,7 +126,7 @@ export class AntigravityClient {
         throw new Error(`Failed to start cascade. Response: ${JSON.stringify(res)}`);
     }
 
-    public async sendUserMessage(cascadeId: string, text: string, modelStr: string): Promise<void> {
+    public async sendUserMessage(cascadeId: string, items: any[], modelStr: string): Promise<void> {
         const payload = {
             "cascadeId": cascadeId,
             "cascadeConfig": {
@@ -138,11 +138,7 @@ export class AntigravityClient {
                 }
             },
             "turnConfig": {},
-            "items": [
-                {
-                    "text": text
-                }
-            ]
+            "items": items
         };
 
         await this.makeRequest('aida.v1.AidaService', 'SendUserCascadeMessage', payload);
@@ -161,5 +157,18 @@ export class AntigravityClient {
 
         const res = await this.makeRequest('aida.v1.AidaService', 'GetCascadeTrajectorySteps', payload);
         return res.steps || [];
+    }
+
+    public async approveWait(cascadeId: string): Promise<void> {
+        const payload = {
+            "conversationId": cascadeId,
+            "interaction": {
+                "accept": {}
+            }
+        };
+        // Use LanguageServerService for interaction as defined by the protocol
+        try {
+            await this.makeRequest('exa.language_server_pb.LanguageServerService', 'HandleCascadeUserInteraction', payload);
+        } catch (e) { /* ignore blind approval errors */ }
     }
 }

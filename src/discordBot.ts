@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { Client, GatewayIntentBits, Partials, Events, Message, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import * as fs from 'fs';
+import { Client, GatewayIntentBits, Partials, Events, Message, Interaction, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, AttachmentBuilder } from 'discord.js';
 import { AntigravityClient } from './antigravityClient';
 
 const MODEL_MAP: Record<string, string> = {
@@ -127,6 +128,29 @@ export class DiscordBot {
                 await interaction.update({ embeds: [embed], components: [] });
                 this.outputChannel.appendLine(`[Discord] Model switched to: ${displayName}`);
             }
+
+            if (customId.startsWith('review_yes_')) {
+                const cascadeId = customId.replace('review_yes_', '');
+                await interaction.update({ content: '✅ 承認されました。実装を続行します。', components: [] });
+
+                const items = [{ text: "<discord_reply>ユーザーが計画を承認(Yes)しました。この計画通りに実装を開始してください。</discord_reply>\n\n[システム司令: ユーザーがYesを選択しました。計画に従って実行フェーズに入ってください。]" }];
+
+                let initialMsg = await interaction.message.reply(`🤔 Processing task... (\`${GLOBAL_STATE.currentModelDisplay}\` / \`${GLOBAL_STATE.currentMode}\`)`);
+
+                try {
+                    await this.antigravityClient.sendUserMessage(cascadeId, items, GLOBAL_STATE.currentModel);
+                    this.pollStepsAndStream(cascadeId, [initialMsg]).catch(e => console.error(e));
+                } catch (e: any) {
+                    await initialMsg.edit(`❌ Error: ${e.message}`);
+                }
+                return;
+            }
+
+            if (customId.startsWith('review_no_')) {
+                await interaction.update({ content: '❌ 修正を指示します。', components: [] });
+                await interaction.message.reply("修正点や追加の要望をこのスレッドに返信してください（ボットが自動的に文脈を引き継ぎ、計画書を更新します）。");
+                return;
+            }
         });
     }
 
@@ -165,7 +189,7 @@ export class DiscordBot {
         const dispModel = GLOBAL_STATE.currentModelDisplay;
 
         let finalMessage = message.content.trim();
-        let systemPrompt = "\n\n[システム司令: あなたはDiscord経由でユーザーと対話しています。思考過程やツール実行の宣言はIDE上には通常通り全て出力して構いませんが、Discordユーザーへの最終報告や返答文（「〇〇が完了しました」といった綺麗なメッセージや最終のURL等）は、必ず `<discord_reply>` と `</discord_reply>` のXMLタグで囲んで出力してください。タグの外側の文章はDiscord側では非表示になるため、ユーザーへの返事はすべてこのタグ内に含めてください。]";
+        let systemPrompt = "\n\n[システム司令: あなたはDiscord経由でユーザーと対話しています。思考過程やツール実行の宣言はIDE上には通常通り全て出力して構いませんが、Discordユーザーへの最終報告や返答文（「〇〇が完了しました」といった綺麗なメッセージや最終のURL等）は、必ず `<discord_reply>` と `</discord_reply>` のXMLタグで囲んで出力してください。タグの外側の文章はDiscord側では非表示になるため、ユーザーへの返事はすべてこのタグ内に含めてください。]\n[システム司令: もしユーザーに実装計画書などの .md ファイルを提示して承認を得たい場合は、必ず `<discord_review file=\"絶対パス\">` の形式で出力してください。これを検知するとユーザーにYes/Noボタンが提示されます。]";
 
         if (GLOBAL_STATE.autoApprove) {
             const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
@@ -271,6 +295,38 @@ export class DiscordBot {
 
                     if (status === 'CORTEX_STEP_STATUS_DONE') {
                         isDone = true;
+
+                        // Check for discord_review tags when done
+                        const reviewRegex = /<discord_review\s+file="([^"]+)">/g;
+                        let match;
+                        while ((match = reviewRegex.exec(responseText)) !== null) {
+                            const filePath = match[1];
+                            if (fs.existsSync(filePath)) {
+                                const attachment = new AttachmentBuilder(filePath);
+
+                                const btnYes = new ButtonBuilder()
+                                    .setCustomId(`review_yes_${cascadeId}`)
+                                    .setLabel('Yes (実装開始)')
+                                    .setStyle(ButtonStyle.Success);
+
+                                const btnNo = new ButtonBuilder()
+                                    .setCustomId(`review_no_${cascadeId}`)
+                                    .setLabel('No (修正を指示)')
+                                    .setStyle(ButtonStyle.Danger);
+
+                                const row = new ActionRowBuilder<ButtonBuilder>().addComponents(btnYes, btnNo);
+
+                                try {
+                                    await messages[messages.length - 1].reply({
+                                        content: `📄 **実装計画書・ドキュメントが作成されました。** 確認して承認（Yes）か修正（No）を選択してください。`,
+                                        files: [attachment],
+                                        components: [row]
+                                    });
+                                } catch (e) {
+                                    this.outputChannel.appendLine(`[Error] Failed to send review panel: ${e}`);
+                                }
+                            }
+                        }
                     }
 
                     if (responseText !== lastReportedText || isDone) {

@@ -165,18 +165,22 @@ export class DiscordBot {
         const dispModel = GLOBAL_STATE.currentModelDisplay;
 
         let finalMessage = message.content.trim();
+        let systemPrompt = "\n\n[システム司令: あなたはDiscord経由でユーザーと対話しています。思考過程やツール実行の宣言はIDE上には通常通り全て出力して構いませんが、Discordユーザーへの最終報告や返答文（「〇〇が完了しました」といった綺麗なメッセージや最終のURL等）は、必ず `<discord_reply>` と `</discord_reply>` のXMLタグで囲んで出力してください。タグの外側の文章はDiscord側では非表示になるため、ユーザーへの返事はすべてこのタグ内に含めてください。]";
+
         if (GLOBAL_STATE.autoApprove) {
             const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
             const githubUsername = config.get<string>('githubUsername') || '';
             const githubToken = config.get<string>('githubToken') || '';
 
-            let githubInstructions = "最後に `gh repo create` などを用いてGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。";
+            let githubInstructions = "さらに最後に `gh repo create` などを用いてGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。";
             if (githubUsername && githubToken) {
-                githubInstructions = `最後に与えられたGitHubのUsername (${githubUsername}) と Token (${githubToken}) を用いて認証を行い、\`gh repo create\`などでGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。`;
+                githubInstructions = `さらに最後に与えられたGitHubのUsername (${githubUsername}) と Token (${githubToken}) を用いて認証を行い、\`gh repo create\`などでGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。`;
             }
 
-            finalMessage += `\n\n[システム司令: この依頼を処理する際、ターミナルコマンドの実行やファイル変更はすべてそのまま行い、${githubInstructions}]`;
+            systemPrompt += `\nまた、この依頼を処理する際、ターミナルコマンドの実行やファイル変更はすべてそのまま行い、${githubInstructions}`;
         }
+
+        finalMessage += systemPrompt;
 
         const items: any[] = [];
         if (finalMessage) {
@@ -278,8 +282,32 @@ export class DiscordBot {
                         lastEditTime = now;
 
                         let fullText = responseText;
+
+                        // Extract noiseless <discord_reply> tag
+                        const openTag = '<discord_reply>';
+                        const closeTag = '</discord_reply>';
+                        const startIndex = fullText.indexOf(openTag);
+
+                        if (startIndex !== -1) {
+                            const contentStart = startIndex + openTag.length;
+                            const endIndex = fullText.indexOf(closeTag, contentStart);
+                            if (endIndex !== -1) {
+                                fullText = fullText.substring(contentStart, endIndex).trim();
+                            } else {
+                                fullText = fullText.substring(contentStart).trim();
+                            }
+                        } else {
+                            if (isDone && fullText.trim().length > 0) {
+                                // Fallback: AI completely forgot tags, show the full text rather than hanging
+                                fullText = fullText.trim();
+                            } else {
+                                // Still processing thoughts, tag not yet reached
+                                fullText = '';
+                            }
+                        }
+
                         if (!fullText.trim()) {
-                            fullText = `🤔 Thinking... (\`${GLOBAL_STATE.currentModelDisplay}\` / \`${GLOBAL_STATE.currentMode}\`)`;
+                            fullText = `🤔 Processing task... (\`${GLOBAL_STATE.currentModelDisplay}\` / \`${GLOBAL_STATE.currentMode}\`)`;
                         }
 
                         // Split into 1900 char chunks to respect Discord limits

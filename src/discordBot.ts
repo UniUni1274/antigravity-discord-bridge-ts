@@ -158,6 +158,8 @@ export class DiscordBot {
         await message.reply({ embeds: [embed], components: rows });
     }
 
+    private threadCascadeMap = new Map<string, string>();
+
     private async handleUserMessage(message: Message) {
         const text = message.content;
         const dispModel = GLOBAL_STATE.currentModelDisplay;
@@ -189,7 +191,7 @@ export class DiscordBot {
                     const buffer = Buffer.from(arrayBuffer);
                     items.push({
                         image: {
-                            data: buffer.toString('base64') // Or whatever specific structure the API needs. Base64 is standard.
+                            data: buffer.toString('base64')
                         }
                     });
                 } catch (e: any) {
@@ -200,16 +202,49 @@ export class DiscordBot {
 
         if (items.length === 0) return;
 
-        let initialMsg = await message.reply(`🤔 Thinking... (\`${dispModel}\` / \`${GLOBAL_STATE.currentMode}\`)`);
+        let targetChannel = message.channel;
+        let cascadeId: string | null = null;
+        let initialMsg: Message;
+
+        if (targetChannel.isThread()) {
+            // Check if we have an existing cascade context
+            cascadeId = this.threadCascadeMap.get(targetChannel.id) || null;
+            if (!cascadeId) {
+                // Thread exists but we lost tracking (e.g. restart). Create new context anyway.
+                this.outputChannel.appendLine(`[Antigravity] Thread not found in map, creating new cascade context.`);
+                cascadeId = await this.antigravityClient.startCascade();
+                this.threadCascadeMap.set(targetChannel.id, cascadeId);
+            } else {
+                this.outputChannel.appendLine(`[Antigravity] Resuming context in thread: ${targetChannel.id} (Cascade: ${cascadeId})`);
+            }
+            initialMsg = await message.reply(`🤔 Thinking... (\`${dispModel}\` / \`${GLOBAL_STATE.currentMode}\`)`);
+        } else {
+            // It's a normal channel message -> Start new cascade & thread
+            cascadeId = await this.antigravityClient.startCascade();
+
+            // Create a short name for the thread based on user text
+            let threadName = `Task: ${text.substring(0, 30).replace(/\n/g, ' ')}`;
+            if (threadName.length < 7) threadName = "Task: Processing...";
+
+            initialMsg = await message.reply(`🧵 Starting isolated task environment in thread...`);
+
+            const thread = await message.startThread({
+                name: threadName,
+                autoArchiveDuration: 60,
+                reason: 'Antigravity isolated task thread'
+            });
+
+            this.threadCascadeMap.set(thread.id, cascadeId);
+            targetChannel = thread;
+
+            // Send the first tracking message inside the new thread
+            initialMsg = await thread.send(`🤔 Thinking... (\`${dispModel}\` / \`${GLOBAL_STATE.currentMode}\`)`);
+            this.outputChannel.appendLine(`[Antigravity] Started cascade: ${cascadeId} in thread ${thread.id}`);
+        }
 
         try {
-            const cascadeId = await this.antigravityClient.startCascade();
             await this.antigravityClient.sendUserMessage(cascadeId, items, GLOBAL_STATE.currentModel);
-
-            this.outputChannel.appendLine(`[Antigravity] Started cascade: ${cascadeId}`);
-
             await this.pollStepsAndStream(cascadeId, [initialMsg]);
-
         } catch (e: any) {
             this.outputChannel.appendLine(`[Error] Cascade failed: ${e.message}`);
             await initialMsg.edit(`❌ Error communicating with IDE: ${e.message}`);

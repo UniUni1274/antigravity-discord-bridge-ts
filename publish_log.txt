@@ -1,0 +1,38 @@
+﻿Executing prepublish script 'npm run vscode:prepublish'...
+
+> antigravity-discord-bridge-ts@1.0.0 vscode:prepublish
+> npm run package-ext
+
+
+> antigravity-discord-bridge-ts@1.0.0 package-ext
+> esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify
+
+node.exe : 
+発生場所 C:\Program Files\nodejs\npx.ps1:29 文字:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  out\extension.js  1.2mb
+
+Done in 52ms
+ INFO  Files included in the VSIX:
+tmp-44496-h7bW4LrJ4s4w
+笏懌楳 [Content_Types].xml 
+笏懌楳 extension.vsixmanifest 
+笏披楳 extension/
+   笏懌楳 LICENSE.txt [1.05 KB]
+   笏懌楳 package.json [1.83 KB]
+   笏懌楳 readme.md [1.48 KB]
+   笏披楳 out/
+      笏懌楳 antigravityClient.js [7.49 KB]
+      笏懌楳 botServer.js [4.26 KB]
+      笏懌楳 discordBot.js [9.46 KB]
+      笏披楳 extension.js [1.21 MB]
+
+The file extension/out/extension.js is large (1.21 MB)
+
+ INFO  Publishing 'Manon1274.antigravity-discord-bridge-ts v1.0.0'...
+ ERROR  Your extension has suspicious content. Please fix your extension metadata, or con
+tact support if you need assistance.

@@ -54,6 +54,11 @@
           "type": "string",
           "default": "",
           "description": "GitHub Personal Access Token (used for auto-approve repository creation)."
+        },
+        "antigravity-discord-bridge.logChannelId": {
+          "type": "string",
+          "default": "",
+          "description": "Discord Channel ID for Live AI Logs and Terminal tracking."
         }
       }
     }

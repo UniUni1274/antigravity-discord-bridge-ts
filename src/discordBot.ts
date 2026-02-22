@@ -285,6 +285,19 @@ export class DiscordBot {
         let lastEditTime = Date.now();
         let indicator = ' 🔵';
 
+        const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
+        const logChannelId = config.get<string>('logChannelId') || '';
+        let logChannel: any = null;
+        if (logChannelId) {
+            try {
+                logChannel = await this.client.channels.fetch(logChannelId);
+            } catch (e) {
+                this.outputChannel.appendLine(`[Discord] Could not fetch log channel: ${logChannelId}`);
+            }
+        }
+
+        let reportedLogSteps = new Set<string>();
+
         while (!isDone) {
             const steps = await this.antigravityClient.getCascadeSteps(cascadeId);
 
@@ -388,6 +401,36 @@ export class DiscordBot {
                             try {
                                 await messages[i].edit(disp);
                             } catch (e) { /* ignore rate limits */ }
+                        }
+                    }
+                } else if (step.type !== 'CORTEX_STEP_TYPE_USER_MESSAGE' && step.status !== 'CORTEX_STEP_STATUS_PENDING') {
+                    if (!reportedLogSteps.has(step.id) && logChannel && logChannel.isTextBased()) {
+                        if (step.status === 'CORTEX_STEP_STATUS_IN_PROGRESS' || step.status === 'CORTEX_STEP_STATUS_DONE') {
+                            reportedLogSteps.add(step.id);
+
+                            const actionName = step.type.replace('CORTEX_STEP_TYPE_', '');
+                            let details = '';
+                            const stepAny = step as any;
+
+                            if (stepAny.runCommand?.command) {
+                                details = `**Command:**\n\`\`\`sh\n${stepAny.runCommand.command}\n\`\`\``;
+                            } else if (stepAny.viewFile?.absolutePath) {
+                                details = `**View File:**\n\`${stepAny.viewFile.absolutePath}\``;
+                            } else if (stepAny.replaceFileContent?.targetFile) {
+                                details = `**Edit File:**\n\`${stepAny.replaceFileContent.targetFile}\``;
+                            } else if (stepAny.listDir?.directoryPath) {
+                                details = `**List Dir:**\n\`${stepAny.listDir.directoryPath}\``;
+                            } else if (stepAny.grepSearch?.searchPath) {
+                                details = `**Search:**\n\`${stepAny.grepSearch.query}\` in \`${stepAny.grepSearch.searchPath}\``;
+                            }
+
+                            const embed = new EmbedBuilder()
+                                .setTitle(`🛠️ Action: ${actionName}`)
+                                .setDescription(`[Cascade: \`${cascadeId}\`]\nStatus: \`${step.status}\`\n\n${details}`)
+                                .setColor('#f39c12')
+                                .setTimestamp();
+
+                            logChannel.send({ embeds: [embed] }).catch(() => { });
                         }
                     }
                 }

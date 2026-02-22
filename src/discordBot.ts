@@ -164,7 +164,16 @@ export class DiscordBot {
 
         let finalMessage = message.content.trim();
         if (GLOBAL_STATE.autoApprove) {
-            finalMessage += "\n\n[システム司令: この依頼を処理する際、ターミナルコマンドの実行やファイル変更はすべてそのまま行い、最後に `gh repo create` などを用いてGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。]";
+            const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
+            const githubUsername = config.get<string>('githubUsername') || '';
+            const githubToken = config.get<string>('githubToken') || '';
+
+            let githubInstructions = "最後に `gh repo create` などを用いてGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。";
+            if (githubUsername && githubToken) {
+                githubInstructions = `最後に与えられたGitHubのUsername (${githubUsername}) と Token (${githubToken}) を用いて認証を行い、\`gh repo create\`などでGitHubリポジトリを作成・Pushし、最終的にURLか結果を出力してください。`;
+            }
+
+            finalMessage += `\n\n[システム司令: この依頼を処理する際、ターミナルコマンドの実行やファイル変更はすべてそのまま行い、${githubInstructions}]`;
         }
 
         const items: any[] = [];

@@ -44,6 +44,16 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically start the proxy when Antigravity IDE launches."
+        },
+        "antigravity-discord-bridge.githubUsername": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Username (used for auto-approve repository creation)."
+        },
+        "antigravity-discord-bridge.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Personal Access Token (used for auto-approve repository creation)."
         }
       }
     }

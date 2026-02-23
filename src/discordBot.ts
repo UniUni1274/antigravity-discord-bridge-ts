@@ -46,7 +46,7 @@ export class DiscordBot {
 
     private registerEvents() {
         this.client.on(Events.ClientReady, () => {
-            this.outputChannel.appendLine(`[Discord] Bot is online as ${this.client.user?.tag}`);
+            this.outputChannel.appendLine(`[Chat] Bot is online as ${this.client.user?.tag}`);
             this.client.user?.setActivity('Antigravity IDE', { type: 0 });
         });
 
@@ -54,7 +54,7 @@ export class DiscordBot {
             // Ignore bots and unauthorized users
             if (message.author.bot) return;
             if (this.allowedUserId && message.author.id !== this.allowedUserId) {
-                this.outputChannel.appendLine(`[Discord] Blocked unauthorized request from ${message.author.tag}`);
+                this.outputChannel.appendLine(`[Chat] Blocked unauthorized request from ${message.author.tag}`);
                 return;
             }
 
@@ -82,6 +82,20 @@ export class DiscordBot {
                 } else {
                     await message.reply('Invalid mode. Use `/mode planning`, `/mode fast`, or `/mode auto`.');
                 }
+                return;
+            }
+
+            if (message.content.trim() === '/pr' || message.content.trim() === '!pr') {
+                const prInstructions = `[システム司令: ユーザーから 自動Pull Request作成コマンド (/pr) が実行されました。以下の手順で自動的にPull Requestを作成してください。
+1. \`git status\` と \`git diff\` を実行して、現在ワークスペースにあるすべての変更を把握する。
+2. 変更内容を分析し、適切な新しいブランチ名（例: \`feature/xx-yy\` や \`fix/zz\`）を決定する。
+3. \`git checkout -b <新規ブランチ名>\` でブランチを作成・移動する。
+4. \`git add .\` および \`git commit -m "..."\` を用いて、変更内容を分かりやすくコミットする。
+5. \`git push origin <新規ブランチ名>\` でリモートへプッシュする。
+6. \`gh pr create --title "..." --body "..."\` コマンドを実行し、PRを自動作成する（タイトルと本文は変更差分からあなたが自動的に最も品質の高いものを生成してください）。
+※ すべてのターミナル実行プロセスをあなた自身で完結させ、完了後、作成されたPRのURLを必ず <chat_reply> タグで包んで「PRを作成しました: [URL]」のように報告してください。]`;
+                message.content = prInstructions;
+                await this.handleUserMessage(message);
                 return;
             }
 
@@ -126,14 +140,14 @@ export class DiscordBot {
 
                 // Remove buttons
                 await interaction.update({ embeds: [embed], components: [] });
-                this.outputChannel.appendLine(`[Discord] Model switched to: ${displayName}`);
+                this.outputChannel.appendLine(`[Chat] Model switched to: ${displayName}`);
             }
 
             if (customId.startsWith('review_yes_')) {
                 const cascadeId = customId.replace('review_yes_', '');
                 await interaction.update({ content: '✅ 承認されました。実装を続行します。', components: [] });
 
-                const items = [{ text: "<discord_reply>ユーザーが計画を承認(Yes)しました。この計画通りに実装を開始してください。</discord_reply>\n\n[システム司令: ユーザーがYesを選択しました。計画に従って実行フェーズに入ってください。]" }];
+                const items = [{ text: "<chat_reply>ユーザーが計画を承認(Yes)しました。この計画通りに実装を開始してください。</discord_reply>\n\n[システム司令: ユーザーがYesを選択しました。計画に従って実行フェーズに入ってください。]" }];
 
                 let initialMsg = await interaction.message.reply(`🤔 Processing task... (\`${GLOBAL_STATE.currentModelDisplay}\` / \`${GLOBAL_STATE.currentMode}\`)`);
 
@@ -189,10 +203,10 @@ export class DiscordBot {
         const dispModel = GLOBAL_STATE.currentModelDisplay;
 
         let finalMessage = message.content.trim();
-        let systemPrompt = "\n\n[システム司令: あなたはDiscord経由でユーザーと対話しています。思考過程やツール実行の宣言はIDE上には通常通り全て出力して構いませんが、Discordユーザーへの最終報告や返答文（「〇〇が完了しました」といった綺麗なメッセージや最終のURL等）は、必ず `<discord_reply>` と `</discord_reply>` のXMLタグで囲んで出力してください。タグの外側の文章はDiscord側では非表示になるため、ユーザーへの返事はすべてこのタグ内に含めてください。]\n[システム司令: もしユーザーに実装計画書などの .md ファイルを提示して承認を得たい場合は、必ず `<discord_review file=\"絶対パス\">` の形式で出力してください。これを検知するとユーザーにYes/Noボタンが提示されます。]";
+        let systemPrompt = "\n\n[システム司令: あなたはDiscord経由でユーザーと対話しています。思考過程やツール実行の宣言はIDE上には通常通り全て出力して構いませんが、Discordユーザーへの最終報告や返答文（「〇〇が完了しました」といった綺麗なメッセージや最終のURL等）は、必ず `<chat_reply>` と `</discord_reply>` のXMLタグで囲んで出力してください。タグの外側の文章はDiscord側では非表示になるため、ユーザーへの返事はすべてこのタグ内に含めてください。]\n[システム司令: もしユーザーに実装計画書などの .md ファイルを提示して承認を得たい場合は、必ず `<chat_review file=\"絶対パス\">` の形式で出力してください。これを検知するとユーザーにYes/Noボタンが提示されます。]";
 
         if (GLOBAL_STATE.autoApprove) {
-            const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
+            const config = vscode.workspace.getConfiguration('antigravity-chat-bridge');
             const githubUsername = config.get<string>('githubUsername') || '';
             const githubToken = config.get<string>('githubToken') || '';
 
@@ -285,14 +299,14 @@ export class DiscordBot {
         let lastEditTime = Date.now();
         let indicator = ' 🔵';
 
-        const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
+        const config = vscode.workspace.getConfiguration('antigravity-chat-bridge');
         const logChannelId = config.get<string>('logChannelId') || '';
         let logChannel: any = null;
         if (logChannelId) {
             try {
                 logChannel = await this.client.channels.fetch(logChannelId);
             } catch (e) {
-                this.outputChannel.appendLine(`[Discord] Could not fetch log channel: ${logChannelId}`);
+                this.outputChannel.appendLine(`[Chat] Could not fetch log channel: ${logChannelId}`);
             }
         }
 
@@ -310,7 +324,7 @@ export class DiscordBot {
                         isDone = true;
 
                         // Check for discord_review tags when done
-                        const reviewRegex = /<discord_review\s+file="([^"]+)">/g;
+                        const reviewRegex = /<chat_review\s+file="([^"]+)">/g;
                         let match;
                         while ((match = reviewRegex.exec(responseText)) !== null) {
                             const filePath = match[1];
@@ -352,8 +366,8 @@ export class DiscordBot {
 
                         let fullText = responseText;
 
-                        // Extract noiseless <discord_reply> tag
-                        const openTag = '<discord_reply>';
+                        // Extract noiseless <chat_reply> tag
+                        const openTag = '<chat_reply>';
                         const closeTag = '</discord_reply>';
                         const startIndex = fullText.indexOf(openTag);
 
@@ -462,6 +476,6 @@ export class DiscordBot {
         if (!this.isRunning) return;
         this.client.destroy();
         this.isRunning = false;
-        this.outputChannel.appendLine(`[Discord] Bot offline`);
+        this.outputChannel.appendLine(`[Chat] Bot offline`);
     }
 }

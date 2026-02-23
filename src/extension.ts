@@ -4,17 +4,17 @@ import { BotServer } from './botServer';
 let botServer: BotServer;
 
 export async function activate(context: vscode.ExtensionContext) {
-    console.log('Antigravity Discord Bridge (Native) is now active!');
+    console.log('Antigravity Chat Bridge (Native) is now active!');
 
     // Create an output channel for logs
-    const outputChannel = vscode.window.createOutputChannel('Discord Bridge');
+    const outputChannel = vscode.window.createOutputChannel('Chat Bridge');
     context.subscriptions.push(outputChannel);
 
     // Create the status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'antigravity-discord-bridge.toggleBot';
-    statusBarItem.text = '$(play) Start Discord Bridge';
-    statusBarItem.tooltip = 'Click to start or stop the native Discord Bridge proxy';
+    statusBarItem.command = 'antigravity-chat-bridge.toggleBot';
+    statusBarItem.text = '$(play) Start Chat Bridge';
+    statusBarItem.tooltip = 'Click to start or stop the native Chat Bridge proxy';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 
@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
     botServer = new BotServer(outputChannel, statusBarItem);
 
     // Register toggle command
-    const toggleCommand = vscode.commands.registerCommand('antigravity-discord-bridge.toggleBot', async () => {
+    const toggleCommand = vscode.commands.registerCommand('antigravity-chat-bridge.toggleBot', async () => {
         if (botServer.isRunning) {
             await botServer.stop();
         } else {
@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(toggleCommand);
 
     // Handle auto-start setting
-    const config = vscode.workspace.getConfiguration('antigravity-discord-bridge');
+    const config = vscode.workspace.getConfiguration('antigravity-chat-bridge');
     if (config.get<boolean>('autoStart', true)) {
         outputChannel.appendLine('[INFO] Auto-start is enabled. Attempting to start the bot...');
         // We do not block the activation process

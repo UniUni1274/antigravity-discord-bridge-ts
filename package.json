@@ -1,13 +1,13 @@
 {
-  "name": "antigravity-discord-bridge-ts",
-  "displayName": "Antigravity Discord Bridge (Native)",
-  "description": "Control your Antigravity IDE remotely via Discord.",
+  "name": "antigravity-chat-bridge-ts",
+  "displayName": "Antigravity Chat Bridge (Native)",
+  "description": "Control your Antigravity IDE remotely via Chat.",
   "icon": "icon.png",
   "version": "1.0.0",
   "publisher": "Manon1274",
   "repository": {
     "type": "git",
-    "url": "https://github.com/UniUni1274/antigravity-discord-bridge-ts.git"
+    "url": "https://github.com/UniUni1274/antigravity-chat-bridge-ts.git"
   },
   "license": "MIT",
   "engines": {
@@ -23,42 +23,42 @@
   "contributes": {
     "commands": [
       {
-        "command": "antigravity-discord-bridge.toggleBot",
-        "title": "Discord Bridge: Toggle Bot"
+        "command": "antigravity-chat-bridge.toggleBot",
+        "title": "Chat Bridge: Toggle Bot"
       }
     ],
     "configuration": {
-      "title": "Antigravity Discord Bridge",
+      "title": "Antigravity Chat Bridge",
       "properties": {
-        "antigravity-discord-bridge.botToken": {
+        "antigravity-chat-bridge.botToken": {
           "type": "string",
           "default": "",
           "description": "Bridge API Key."
         },
-        "antigravity-discord-bridge.allowedUserId": {
+        "antigravity-chat-bridge.allowedUserId": {
           "type": "string",
           "default": "",
           "description": "The allowed User ID (Numeric). Only this user can control the proxy."
         },
-        "antigravity-discord-bridge.autoStart": {
+        "antigravity-chat-bridge.autoStart": {
           "type": "boolean",
           "default": true,
           "description": "Automatically start the proxy when Antigravity IDE launches."
         },
-        "antigravity-discord-bridge.githubUsername": {
+        "antigravity-chat-bridge.githubUsername": {
           "type": "string",
           "default": "",
           "description": "GitHub Username (used for auto-approve repository creation)."
         },
-        "antigravity-discord-bridge.githubToken": {
+        "antigravity-chat-bridge.githubToken": {
           "type": "string",
           "default": "",
           "description": "GitHub Personal Access Token (used for auto-approve repository creation)."
         },
-        "antigravity-discord-bridge.logChannelId": {
+        "antigravity-chat-bridge.logChannelId": {
           "type": "string",
           "default": "",
-          "description": "Discord Channel ID for Live AI Logs and Terminal tracking."
+          "description": "Chat Channel ID for Live AI Logs and Terminal tracking."
         }
       }
     }

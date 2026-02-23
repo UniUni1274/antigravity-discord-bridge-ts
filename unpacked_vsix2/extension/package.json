@@ -1,0 +1,82 @@
+{
+  "name": "antigravity-discord-bridge-ts",
+  "displayName": "Antigravity Discord Bridge (Native)",
+  "description": "Control your Antigravity IDE remotely via Discord.",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "publisher": "Manon1274",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UniUni1274/antigravity-discord-bridge-ts.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "antigravity-discord-bridge.toggleBot",
+        "title": "Discord Bridge: Toggle Bot"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Discord Bridge",
+      "properties": {
+        "antigravity-discord-bridge.botToken": {
+          "type": "string",
+          "default": "",
+          "description": "Bridge API Key."
+        },
+        "antigravity-discord-bridge.allowedUserId": {
+          "type": "string",
+          "default": "",
+          "description": "The allowed User ID (Numeric). Only this user can control the proxy."
+        },
+        "antigravity-discord-bridge.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the proxy when Antigravity IDE launches."
+        },
+        "antigravity-discord-bridge.githubUsername": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Username (used for auto-approve repository creation)."
+        },
+        "antigravity-discord-bridge.githubToken": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub Personal Access Token (used for auto-approve repository creation)."
+        },
+        "antigravity-discord-bridge.logChannelId": {
+          "type": "string",
+          "default": "",
+          "description": "Discord Channel ID for Live AI Logs and Terminal tracking."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package-ext",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package",
+    "package-ext": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --minify"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/vscode": "^1.80.0",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.1.3"
+  }
+}

@@ -99,6 +99,39 @@ export class DiscordBot {
                 return;
             }
 
+            if (message.content.trim() === '/fix' || message.content.trim() === '!fix') {
+                const diagnostics = vscode.languages.getDiagnostics();
+                let errorList = '';
+                for (const [uri, diags] of diagnostics) {
+                    const errors = diags.filter(d => d.severity === vscode.DiagnosticSeverity.Error || d.severity === vscode.DiagnosticSeverity.Warning);
+                    if (errors.length > 0) {
+                        errorList += `\nFile: ${uri.fsPath}\n`;
+                        for (const err of errors) {
+                            errorList += `- Line ${err.range.start.line + 1}: [${err.source || 'Linter'}] ${err.message}\n`;
+                        }
+                    }
+                }
+
+                if (!errorList) {
+                    await message.reply('✅ 現在のワークスペースにエラー・警告は見つかりませんでした！素晴らしいです。(No errors found)');
+                    return;
+                }
+
+                const fixInstructions = `[システム司令: ユーザーから エラー自動修正コマンド (/fix) が実行されました。
+現在、以下のファイルでエラー/警告が発生しています。
+
+${errorList}
+
+手順:
+1. これらのエラーメッセージをもとに、該当ファイルを開いて原因を特定する。
+2. 適切な修正方針を立ててコードを編集する。
+3. ターミナルでビルドやテストコマンドを走らせてエラーが消えたか確認する。
+4. 全て解決したら、どのような修正を行ったかを <chat_reply> タグで包んでユーザーに報告してください。]`;
+                message.content = fixInstructions;
+                await this.handleUserMessage(message);
+                return;
+            }
+
             // Direct Chat routing
             if (message.content.trim()) {
                 await this.handleUserMessage(message);
